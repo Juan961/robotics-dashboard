@@ -70,32 +70,39 @@ function connect() {
 
   const { messages, connected, error } = getState()
 
+  console.info('[robot-ws] connecting to', WS_URL)
   ws = new WebSocket(WS_URL)
 
   ws.onopen = () => {
+    console.info('[robot-ws] connected')
     connected.value = true
     error.value = null
   }
 
   ws.onmessage = (event) => {
     try {
-      messages.value.push(JSON.parse(event.data) as Telemetry)
-      if (messages.value.length > MAX_MESSAGES) {
-        messages.value.shift()
-      }
+      const msg = JSON.parse(event.data) as Telemetry
+      console.debug('[robot-ws] message received', msg)
+      const next = messages.value.length >= MAX_MESSAGES
+        ? [...messages.value.slice(1), msg]
+        : [...messages.value, msg]
+      messages.value = next
     } catch {
-      console.warn('Failed to parse WS message:', event.data)
+      console.warn('[robot-ws] failed to parse message', event.data)
     }
+
   }
 
   ws.onerror = () => {
+    console.error('[robot-ws] websocket error')
     error.value = 'WebSocket error'
   }
 
   ws.onclose = () => {
+    console.info('[robot-ws] disconnected, scheduling reconnect')
     connected.value = false
     ws = null
-    reconnectTimeout = setTimeout(connect, 3000)
+    reconnectTimeout = setTimeout(connect, 1000)
   }
 }
 
@@ -110,7 +117,10 @@ function disconnect() {
 
 function send(cmd: Command) {
   if (ws?.readyState === WebSocket.OPEN) {
+    console.debug('[robot-ws] send', cmd)
     ws.send(JSON.stringify(cmd))
+  } else {
+    console.warn('[robot-ws] send skipped, socket not open', cmd)
   }
 }
 
@@ -125,4 +135,19 @@ export function useRobotWebSocket() {
   })
 
   return { ...getState(), send }
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (ws) {
+      ws.close()
+      ws = null
+    }
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout)
+      reconnectTimeout = null
+    }
+    consumers = 0
+    state = null
+  })
 }

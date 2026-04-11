@@ -6,17 +6,20 @@
   <main class="font-roboto container mx-auto py-10 px-4">
     <h1 class="text-4xl font-black font-headline text-primary tracking-tighter uppercase">Dashboard</h1>
 
-    <div class="pt-16 bg-surface p-8 max-w-7xl mx-auto space-y-8">
-      <RobotParameters />
+    <div class="pt-16 bg-surface p-8 mx-auto space-y-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <RobotParameters class="lg:col-span-1" />
 
-      <InverseKinematics />
+        <InverseKinematics class="lg:col-span-2" />
+      </div>
 
-      <ControlConstants />
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <Control class="lg:col-span-1" />
 
-      <Control />
+        <ControlConstants class="lg:col-span-2" />
+      </div>
 
       <Telemetry />
-
     </div>
   </main>
 </template>

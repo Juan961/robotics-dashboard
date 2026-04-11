@@ -1,5 +1,5 @@
 <template>
-  <div class="lg:col-span-8 space-y-6">
+  <div class="space-y-6">
     <!-- Control Card -->
     <section class="bg-surface-container p-6">
       <div class="flex items-center justify-between mb-8">

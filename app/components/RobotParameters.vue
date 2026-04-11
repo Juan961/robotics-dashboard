@@ -1,6 +1,6 @@
 <template>
   <section
-    class="bg-surface-container-low p-6 border-l-2 border-primary-container"
+    class="bg-surface-container-low p-6"
   >
     <h2
       class="text-xs font-headline font-bold text-primary uppercase tracking-[0.3em] mb-6 flex items-center gap-2"
