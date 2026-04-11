@@ -231,8 +231,6 @@ const calculateTurnAroundAxis = () => {
     return;
   }
 
-  console.log("A")
-
   const angularVel = (360 * Math.PI) / (ownAxisData.time * 180);
 
   ownAxisData.leftWheel = angularVel*wheelDistance.value / ( 2 * wheelRadius.value );

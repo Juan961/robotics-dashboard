@@ -12,54 +12,95 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Left wheel position</h3>
+          <h3
+            class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest"
+          >
+            Left wheel position
+          </h3>
 
           <canvas id="leftWheelPosition"></canvas>
         </div>
 
         <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Right wheel position</h3>
+          <h3
+            class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest"
+          >
+            Right wheel position
+          </h3>
 
           <canvas id="rightWheelPosition"></canvas>
         </div>
 
         <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Left wheel velocity</h3>
+          <h3
+            class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest"
+          >
+            Left wheel velocity
+          </h3>
 
           <canvas id="leftWheelVelocity"></canvas>
         </div>
 
         <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Right wheel velocity</h3>
+          <h3
+            class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest"
+          >
+            Right wheel velocity
+          </h3>
 
           <canvas id="rightWheelVelocity"></canvas>
         </div>
 
         <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Acceleration</h3>
+          <h3
+            class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest"
+          >
+            Acceleration
+          </h3>
 
           <canvas id="acceleration"></canvas>
         </div>
 
         <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Gyroscope</h3>
+          <h3
+            class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest"
+          >
+            Gyroscope
+          </h3>
 
           <canvas id="gyroscope"></canvas>
         </div>
 
         <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Distance</h3>
+          <h3
+            class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest"
+          >
+            Distance
+          </h3>
 
           <canvas id="distance"></canvas>
         </div>
+      </div>
 
-        <div>
-          <h3 class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Raw data</h3>
+      <div class="flex flex-col h-full">
+        <h3
+          class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest mb-2"
+        >
+          Raw data
+        </h3>
 
-          <ul>
-            <li v-for="(i, data) in rawData" :key="i">{{ data }}</li>
-          </ul>
-        </div>
+        <ul
+          ref="rawListEl"
+          class="font-mono text-xs space-y-1 flex-1 overflow-y-auto max-h-40"
+        >
+          <li
+            v-for="(entry, i) in messages"
+            :key="i"
+            class="text-on-surface-variant break-all"
+          >
+            {{ JSON.stringify(entry) }}
+          </li>
+        </ul>
       </div>
     </section>
   </div>
@@ -68,7 +109,16 @@
 <script setup lang="ts">
 import Chart from "chart.js/auto";
 
-const rawData = ref([]);
+const rawListEl = ref<HTMLUListElement | null>(null);
+
+const { telemetry, messages } = useRobotWebSocket();
+
+watch(messages, async () => {
+  await nextTick();
+  if (rawListEl.value) {
+    rawListEl.value.scrollTop = rawListEl.value.scrollHeight;
+  }
+}, { deep: true });
 
 const data = [
   { year: 2010, count: 10 },

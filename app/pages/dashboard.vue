@@ -20,3 +20,15 @@
     </div>
   </main>
 </template>
+
+<script setup>
+const { telemetry, connected } = useRobotWebSocket()
+
+watch(telemetry, (data) => {
+  console.log('[WebSocket] Telemetry:', data)
+})
+
+watch(connected, (value) => {
+  console.log('[WebSocket] Connected:', value)
+})
+</script>

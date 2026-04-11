@@ -1,4 +1,5 @@
-const WS_URL = 'ws://192.168.1.50/ws'
+const WS_URL = 'ws://192.168.20.174/ws'
+const MAX_MESSAGES = 200
 
 export interface Telemetry {
   t: number
@@ -36,7 +37,8 @@ export interface Command {
 }
 
 export function useRobotWebSocket() {
-  const telemetry = ref<Telemetry | null>(null)
+  const messages = ref<Telemetry[]>([])
+  const telemetry = computed<Telemetry | null>(() => messages.value[messages.value.length - 1] ?? null)
   const connected = ref(false)
   const error = ref<string | null>(null)
 
@@ -55,7 +57,10 @@ export function useRobotWebSocket() {
 
     ws.onmessage = (event) => {
       try {
-        telemetry.value = JSON.parse(event.data) as Telemetry
+        messages.value.push(JSON.parse(event.data) as Telemetry)
+        if (messages.value.length > MAX_MESSAGES) {
+          messages.value.shift()
+        }
       } catch {
         console.warn('Failed to parse WS message:', event.data)
       }
@@ -90,5 +95,5 @@ export function useRobotWebSocket() {
   onMounted(connect)
   onUnmounted(disconnect)
 
-  return { telemetry, connected, error, send }
+  return { telemetry, messages, connected, error, send }
 }
