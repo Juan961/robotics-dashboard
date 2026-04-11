@@ -107,131 +107,104 @@
 </template>
 
 <script setup lang="ts">
-import Chart from "chart.js/auto";
+import Chart from 'chart.js/auto'
+import type { Telemetry } from '~/composables/useRobotWebSocket'
 
-const rawListEl = ref<HTMLUListElement | null>(null);
+const MAX_POINTS = 200
 
-const { telemetry, messages } = useRobotWebSocket();
+const rawListEl = ref<HTMLUListElement | null>(null)
+const { telemetry, messages } = useRobotWebSocket()
 
-watch(messages, async () => {
-  await nextTick();
-  if (rawListEl.value) {
-    rawListEl.value.scrollTop = rawListEl.value.scrollHeight;
+// ---- Chart helpers ----
+function makeDataset(label: string, color: string) {
+  return {
+    label,
+    data: [] as number[],
+    borderColor: color,
+    backgroundColor: color + '22',
+    borderWidth: 1.5,
+    pointRadius: 0,
+    tension: 0.3,
   }
-}, { deep: true });
+}
 
-const data = [
-  { year: 2010, count: 10 },
-  { year: 2011, count: 20 },
-  { year: 2012, count: 15 },
-  { year: 2013, count: 25 },
-  { year: 2014, count: 22 },
-  { year: 2015, count: 30 },
-  { year: 2016, count: 28 },
-];
+function makeChart(id: string, datasets: ReturnType<typeof makeDataset>[]) {
+  return new Chart(document.getElementById(id) as HTMLCanvasElement, {
+    type: 'line',
+    data: { labels: [] as number[], datasets },
+    options: {
+      animation: false,
+      responsive: true,
+      scales: {
+        x: { display: false },
+        y: { display: true, ticks: { maxTicksLimit: 5 } },
+      },
+      plugins: {
+        legend: { display: datasets.length > 1 },
+      },
+    },
+  })
+}
+
+function pushToChart(chart: Chart, t: number, values: number[]) {
+  const labels = chart.data.labels as number[]
+  if (labels.length >= MAX_POINTS) {
+    labels.shift()
+    chart.data.datasets.forEach((ds) => (ds.data as number[]).shift())
+  }
+  labels.push(t)
+  values.forEach((v, i) => (chart.data.datasets[i].data as number[]).push(v))
+  chart.update('none')
+}
+
+// ---- Chart instances ----
+let leftPositionChart: Chart
+let rightPositionChart: Chart
+let leftVelocityChart: Chart
+let rightVelocityChart: Chart
+let accelerationChart: Chart
+let gyroscopeChart: Chart
+let distanceChart: Chart
 
 onMounted(() => {
-  const leftPositionChart = new Chart(
-    document.getElementById("leftWheelPosition"),
-    {
-      type: "bar",
-      data: {
-        labels: data.map((row) => row.year),
-        datasets: [
-          {
-            label: "Acquisitions by year",
-            data: data.map((row) => row.count),
-          },
-        ],
-      },
-    }
-  );
+  leftPositionChart  = makeChart('leftWheelPosition',  [makeDataset('pos1', '#4f8ef7')])
+  rightPositionChart = makeChart('rightWheelPosition', [makeDataset('pos2', '#f74f8e')])
+  leftVelocityChart  = makeChart('leftWheelVelocity',  [makeDataset('vel1', '#4ff7a0')])
+  rightVelocityChart = makeChart('rightWheelVelocity', [makeDataset('vel2', '#f7c94f')])
+  distanceChart      = makeChart('distance',           [makeDataset('dist', '#a0f74f')])
 
-  const rightPositionChart = new Chart(
-    document.getElementById("rightWheelPosition"),
-    {
-      type: "bar",
-      data: {
-        labels: data.map((row) => row.year),
-        datasets: [
-          {
-            label: "Acquisitions by year",
-            data: data.map((row) => row.count),
-          },
-        ],
-      },
-    }
-  );
+  accelerationChart = makeChart('acceleration', [
+    makeDataset('X', '#f74f4f'),
+    makeDataset('Y', '#4ff74f'),
+    makeDataset('Z', '#4f4ff7'),
+  ])
 
-  const leftVelocityChart = new Chart(
-    document.getElementById("leftWheelVelocity"),
-    {
-      type: "bar",
-      data: {
-        labels: data.map((row) => row.year),
-        datasets: [
-          {
-            label: "Acquisitions by year",
-            data: data.map((row) => row.count),
-          },
-        ],
-      },
-    }
-  );
+  gyroscopeChart = makeChart('gyroscope', [
+    makeDataset('X', '#f74f4f'),
+    makeDataset('Y', '#4ff74f'),
+    makeDataset('Z', '#4f4ff7'),
+  ])
+})
 
-  const rightVelocityChart = new Chart(
-    document.getElementById("rightWheelVelocity"),
-    {
-      type: "bar",
-      data: {
-        labels: data.map((row) => row.year),
-        datasets: [
-          {
-            label: "Acquisitions by year",
-            data: data.map((row) => row.count),
-          },
-        ],
-      },
-    }
-  );
+// ---- Feed charts from live telemetry ----
+watch(telemetry, (data: Telemetry | null) => {
+  if (!data) return
+  const t = data.t
 
-  const accelerationChart = new Chart(document.getElementById("acceleration"), {
-    type: "bar",
-    data: {
-      labels: data.map((row) => row.year),
-      datasets: [
-        {
-          label: "Acquisitions by year",
-          data: data.map((row) => row.count),
-        },
-      ],
-    },
-  });
+  pushToChart(leftPositionChart,  t, [data.pos1])
+  pushToChart(rightPositionChart, t, [data.pos2])
+  pushToChart(leftVelocityChart,  t, [data.vel1])
+  pushToChart(rightVelocityChart, t, [data.vel2])
+  pushToChart(distanceChart,      t, [data.dist])
+  pushToChart(accelerationChart,  t, [data.ax, data.ay, data.az])
+  pushToChart(gyroscopeChart,     t, [data.gx, data.gy, data.gz])
+})
 
-  const gyroscopeChart = new Chart(document.getElementById("gyroscope"), {
-    type: "bar",
-    data: {
-      labels: data.map((row) => row.year),
-      datasets: [
-        {
-          label: "Acquisitions by year",
-          data: data.map((row) => row.count),
-        },
-      ],
-    },
-  });
-
-  const distanceChart = new Chart(document.getElementById("distance"), {
-    type: "bar",
-    data: {
-      labels: data.map((row) => row.year),
-      datasets: [
-        {
-          label: "Acquisitions by year",
-          data: data.map((row) => row.count),
-        },
-      ],
-    },
-  });
-});
+// ---- Auto-scroll raw data ----
+watch(messages, async () => {
+  await nextTick()
+  if (rawListEl.value) {
+    rawListEl.value.scrollTop = rawListEl.value.scrollHeight
+  }
+}, { deep: true })
 </script>

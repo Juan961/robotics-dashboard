@@ -1,3 +1,5 @@
+import { type ComputedRef, type Ref } from 'vue'
+
 const WS_URL = 'ws://192.168.20.174/ws'
 const MAX_MESSAGES = 200
 
@@ -36,64 +38,91 @@ export interface Command {
   reset?: boolean
 }
 
-export function useRobotWebSocket() {
-  const messages = ref<Telemetry[]>([])
-  const telemetry = computed<Telemetry | null>(() => messages.value[messages.value.length - 1] ?? null)
-  const connected = ref(false)
-  const error = ref<string | null>(null)
+// ---- Lazy singleton ----
+interface State {
+  messages: Ref<Telemetry[]>
+  telemetry: ComputedRef<Telemetry | null>
+  connected: Ref<boolean>
+  error: Ref<string | null>
+}
 
-  let ws: WebSocket | null = null
-  let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+let state: State | null = null
 
-  function connect() {
-    if (ws) return
-
-    ws = new WebSocket(WS_URL)
-
-    ws.onopen = () => {
-      connected.value = true
-      error.value = null
+function getState(): State {
+  if (!state) {
+    const messages = ref<Telemetry[]>([])
+    state = {
+      messages,
+      telemetry: computed<Telemetry | null>(() => messages.value.at(-1) ?? null),
+      connected: ref(false),
+      error: ref<string | null>(null),
     }
+  }
+  return state
+}
 
-    ws.onmessage = (event) => {
-      try {
-        messages.value.push(JSON.parse(event.data) as Telemetry)
-        if (messages.value.length > MAX_MESSAGES) {
-          messages.value.shift()
-        }
-      } catch {
-        console.warn('Failed to parse WS message:', event.data)
+let ws: WebSocket | null = null
+let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+let consumers = 0
+
+function connect() {
+  if (!import.meta.client || ws) return
+
+  const { messages, connected, error } = getState()
+
+  ws = new WebSocket(WS_URL)
+
+  ws.onopen = () => {
+    connected.value = true
+    error.value = null
+  }
+
+  ws.onmessage = (event) => {
+    try {
+      messages.value.push(JSON.parse(event.data) as Telemetry)
+      if (messages.value.length > MAX_MESSAGES) {
+        messages.value.shift()
       }
-    }
-
-    ws.onerror = () => {
-      error.value = 'WebSocket error'
-    }
-
-    ws.onclose = () => {
-      connected.value = false
-      ws = null
-      reconnectTimeout = setTimeout(connect, 3000)
+    } catch {
+      console.warn('Failed to parse WS message:', event.data)
     }
   }
 
-  function disconnect() {
-    if (reconnectTimeout) {
-      clearTimeout(reconnectTimeout)
-      reconnectTimeout = null
-    }
-    ws?.close()
+  ws.onerror = () => {
+    error.value = 'WebSocket error'
+  }
+
+  ws.onclose = () => {
+    connected.value = false
     ws = null
+    reconnectTimeout = setTimeout(connect, 3000)
   }
+}
 
-  function send(cmd: Command) {
-    if (ws?.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(cmd))
-    }
+function disconnect() {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout)
+    reconnectTimeout = null
   }
+  ws?.close()
+  ws = null
+}
 
-  onMounted(connect)
-  onUnmounted(disconnect)
+function send(cmd: Command) {
+  if (ws?.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(cmd))
+  }
+}
 
-  return { telemetry, messages, connected, error, send }
+// ---- Composable ----
+export function useRobotWebSocket() {
+  onMounted(() => {
+    if (++consumers === 1) connect()
+  })
+
+  onUnmounted(() => {
+    if (--consumers === 0) disconnect()
+  })
+
+  return { ...getState(), send }
 }

@@ -45,6 +45,7 @@
 
         <button
           class="px-6 py-2 bg-primary text-on-primary font-headline font-bold text-xs uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(219,252,255,0.4)] active:scale-95"
+          @click="sendControlData"
         >
           Send data
         </button>
@@ -55,12 +56,11 @@
 
 <script setup lang="ts">
 const leftWheelReference = ref(0);
-
 const rightWheelReference = ref(0);
 
+const { send } = useRobotWebSocket();
+
 const sendControlData = () => {
-  // Aquí podrías implementar la lógica para enviar los datos al backend o a los motores
-  console.log("Left Wheel Reference:", leftWheelReference.value);
-  console.log("Right Wheel Reference:", rightWheelReference.value);
+  send({ ref1: leftWheelReference.value, ref2: rightWheelReference.value });
 };
 </script>
