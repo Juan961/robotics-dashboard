@@ -14,9 +14,9 @@
             <span class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Left Wheel</span>
           </div>
           <div class="space-y-6">
-            <PidSlider v-model="left.kp" label="Kp (Proportional)" :min="0" :max="500" :step="0.1" />
-            <PidSlider v-model="left.ki" label="Ki (Integral)"     :min="0" :max="40"  :step="0.1" />
-            <PidSlider v-model="left.kd" label="Kd (Derivative)"   :min="0" :max="1"   :step="0.001" />
+            <PidSlider v-model="left.kp" label="Kp (Proportional)" :min="0" :max="200" :step="0.1" />
+            <PidSlider v-model="left.ki" label="Ki (Integral)"     :min="0" :max="100"  :step="0.1" />
+            <PidSlider v-model="left.kd" label="Kd (Derivative)"   :min="0" :max="10"   :step="0.001" />
           </div>
         </div>
 
@@ -26,9 +26,9 @@
             <span class="text-[11px] font-headline font-bold text-secondary uppercase tracking-widest">Right Wheel</span>
           </div>
           <div class="space-y-6">
-            <PidSlider v-model="right.kp" label="Kp (Proportional)" :min="0" :max="500" :step="0.1" />
-            <PidSlider v-model="right.ki" label="Ki (Integral)"     :min="0" :max="40"  :step="0.1" />
-            <PidSlider v-model="right.kd" label="Kd (Derivative)"   :min="0" :max="1"   :step="0.001" />
+            <PidSlider v-model="right.kp" label="Kp (Proportional)" :min="0" :max="200" :step="0.1" />
+            <PidSlider v-model="right.ki" label="Ki (Integral)"     :min="0" :max="100"  :step="0.1" />
+            <PidSlider v-model="right.kd" label="Kd (Derivative)"   :min="0" :max="10"   :step="0.1" />
           </div>
         </div>
 
@@ -46,8 +46,8 @@
 <script setup lang="ts">
 const { send } = useRobotWebSocket()
 
-const left = reactive({ kp: 500, ki: 25, kd: 0.1 })
-const right = reactive({ kp: 500, ki: 25, kd: 0.1 })
+const left = reactive({ kp: 100, ki: 40, kd: 1 })
+const right = reactive({ kp: 100, ki: 40, kd: 1 })
 
 const sendConstants = () => {
   send({

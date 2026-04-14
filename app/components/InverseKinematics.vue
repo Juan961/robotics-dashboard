@@ -30,7 +30,7 @@
                 type="number"
                 placeholder="5"
                 v-model="ownAxisData.time"
-                @change="calculateTurnAroundAxis"
+                @input="calculateTurnAroundAxis"
               />
             </div>
             <div class="pt-4 mt-4 border-t border-outline-variant/10">
@@ -79,7 +79,7 @@
                   placeholder="1.2"
                   type="number"
                   v-model="circleData.diameter"
-                  @change="calculateCircleTrajectory"
+                  @input="calculateCircleTrajectory"
                 />
               </div>
               <div class="flex-1">
@@ -91,7 +91,7 @@
                   placeholder="5.0"
                   type="number"
                   v-model="circleData.time"
-                  @change="calculateCircleTrajectory"
+                  @input="calculateCircleTrajectory"
                 />
               </div>
             </div>
@@ -141,7 +141,7 @@
                   type="number"
                   placeholder="5.0"
                   v-model="linearData.distance"
-                  @change="calculateLineTrajectory"
+                  @input="calculateLineTrajectory"
                 />
               </div>
               <div class="flex-1">
@@ -153,7 +153,7 @@
                   type="number"
                   placeholder="1.5"
                   v-model="linearData.time"
-                  @change="calculateLineTrajectory"
+                  @input="calculateLineTrajectory"
                 />
               </div>
             </div>
@@ -198,6 +198,9 @@
 </template>
 
 <script setup lang="ts">
+import { reactive, toRefs, watch } from "vue";
+import useRobot from "../composables/useRobot";
+
 const { wheelRadius, wheelDistance } = toRefs(useRobot());
 
 const ownAxisData = reactive({
@@ -264,4 +267,10 @@ const calculateLineTrajectory = () => {
   linearData.leftWheel = linealVel / wheelRadius.value;
   linearData.rightWheel = linealVel / wheelRadius.value;
 };
+
+watch([wheelRadius, wheelDistance], () => {
+  calculateTurnAroundAxis();
+  calculateCircleTrajectory();
+  calculateLineTrajectory();
+});
 </script>
