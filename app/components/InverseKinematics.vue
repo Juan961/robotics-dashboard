@@ -53,6 +53,12 @@
                   <div class="text-xs font-mono text-primary">{{ formatWheel(ownAxisData.rightWheel) }}</div>
                 </div>
               </div>
+              <button
+                class="mt-4 px-4 py-2 bg-primary text-on-primary font-headline font-bold text-[10px] uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(219,252,255,0.4)] active:scale-95"
+                @click="sendOwnAxisSetpoints"
+              >
+                Send setpoints
+              </button>
             </div>
           </div>
         </div>
@@ -115,6 +121,12 @@
                   <div class="text-xs font-mono text-primary">{{ formatWheel(circleData.rightWheel) }}</div>
                 </div>
               </div>
+              <button
+                class="mt-4 px-4 py-2 bg-primary text-on-primary font-headline font-bold text-[10px] uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(219,252,255,0.4)] active:scale-95"
+                @click="sendCircleSetpoints"
+              >
+                Send setpoints
+              </button>
             </div>
           </div>
         </div>
@@ -189,6 +201,12 @@
                   </div>
                 </div>
               </div>
+              <button
+                class="mt-4 px-4 py-2 bg-primary text-on-primary font-headline font-bold text-[10px] uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(219,252,255,0.4)] active:scale-95"
+                @click="sendLineSetpoints"
+              >
+                Send setpoints
+              </button>
             </div>
           </div>
         </div>
@@ -200,8 +218,10 @@
 <script setup lang="ts">
 import { reactive, toRefs, watch } from "vue";
 import useRobot from "../composables/useRobot";
+import { useRobotWebSocket } from "../composables/useRobotWebSocket";
 
 const { wheelRadius, wheelDistance } = toRefs(useRobot());
+const { send } = useRobotWebSocket();
 
 const ownAxisData = reactive({
   time: 0,
@@ -225,6 +245,24 @@ const linearData = reactive({
 
 const formatWheel = (value: number) => {
   return Number.isFinite(value) ? value.toFixed(5) : "0.00000";
+};
+
+const sendSetpoints = (leftWheel: number, rightWheel: number) => {
+  const ref1 = Number.isFinite(leftWheel) ? leftWheel : 0;
+  const ref2 = Number.isFinite(rightWheel) ? rightWheel : 0;
+  send({ ref1, ref2 });
+};
+
+const sendOwnAxisSetpoints = () => {
+  sendSetpoints(ownAxisData.leftWheel, ownAxisData.rightWheel);
+};
+
+const sendCircleSetpoints = () => {
+  sendSetpoints(circleData.leftWheel, circleData.rightWheel);
+};
+
+const sendLineSetpoints = () => {
+  sendSetpoints(linearData.leftWheel, linearData.rightWheel);
 };
 
 const calculateTurnAroundAxis = () => {
