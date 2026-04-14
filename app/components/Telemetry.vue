@@ -111,15 +111,22 @@ import Chart from 'chart.js/auto'
 import type { Telemetry } from '~/composables/useRobotWebSocket'
 
 const MAX_POINTS = 200
+const MAX_ANGLE = 180
+const MIN_DISTANCE_MM = 0
+const MAX_DISTANCE_MM = 2000
+const RADAR_LABELS = Array.from({ length: MAX_ANGLE + 1 }, (_, angle) =>
+  angle % 10 === 0 ? `${angle}°` : '',
+)
 
 const rawListEl = ref<HTMLUListElement | null>(null)
 const { telemetry, messages } = useRobotWebSocket()
+const distanceByAngle = Array<number | null>(MAX_ANGLE + 1).fill(null)
 
 // ---- Chart helpers ----
 function makeDataset(label: string, color: string) {
   return {
     label,
-    data: [] as number[],
+    data: [] as Array<number | null>,
     borderColor: color,
     backgroundColor: color + '22',
     borderWidth: 1.5,
@@ -128,7 +135,7 @@ function makeDataset(label: string, color: string) {
   }
 }
 
-function makeChart(id: string, datasets: ReturnType<typeof makeDataset>[]) {
+function makeLineChart(id: string, datasets: ReturnType<typeof makeDataset>[]) {
   return new Chart(document.getElementById(id) as HTMLCanvasElement, {
     type: 'line',
     data: { labels: [] as number[], datasets },
@@ -146,6 +153,34 @@ function makeChart(id: string, datasets: ReturnType<typeof makeDataset>[]) {
   })
 }
 
+function makeDistanceRadarChart(id: string) {
+  return new Chart(document.getElementById(id) as HTMLCanvasElement, {
+    type: 'radar',
+    data: {
+      labels: RADAR_LABELS,
+      datasets: [makeDataset('dist', '#a0f74f')],
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      scales: {
+        r: {
+          min: MIN_DISTANCE_MM,
+          max: MAX_DISTANCE_MM,
+          ticks: { stepSize: 500 },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+      },
+    },
+  })
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
 function pushToChart(chart: Chart, t: number, values: number[]) {
   const labels = chart.data.labels as number[]
   if (labels.length >= MAX_POINTS) {
@@ -154,6 +189,15 @@ function pushToChart(chart: Chart, t: number, values: number[]) {
   }
   labels.push(t)
   values.forEach((v, i) => (chart.data.datasets[i].data as number[]).push(v))
+  chart.update('none')
+}
+
+function updateDistanceRadar(chart: Chart, angle: number, distance: number) {
+  const clampedAngle = Math.round(clamp(angle, 0, MAX_ANGLE))
+  const clampedDistance = clamp(distance, MIN_DISTANCE_MM, MAX_DISTANCE_MM)
+
+  distanceByAngle[clampedAngle] = clampedDistance
+  chart.data.datasets[0].data = [...distanceByAngle]
   chart.update('none')
 }
 
@@ -167,19 +211,19 @@ let gyroscopeChart: Chart
 let distanceChart: Chart
 
 onMounted(() => {
-  leftPositionChart  = makeChart('leftWheelPosition',  [makeDataset('pos1', '#4f8ef7')])
-  rightPositionChart = makeChart('rightWheelPosition', [makeDataset('pos2', '#f74f8e')])
-  leftVelocityChart  = makeChart('leftWheelVelocity',  [makeDataset('vel1', '#4ff7a0')])
-  rightVelocityChart = makeChart('rightWheelVelocity', [makeDataset('vel2', '#f7c94f')])
-  distanceChart      = makeChart('distance',           [makeDataset('dist', '#a0f74f')])
+  leftPositionChart  = makeLineChart('leftWheelPosition',  [makeDataset('pos1', '#4f8ef7')])
+  rightPositionChart = makeLineChart('rightWheelPosition', [makeDataset('pos2', '#f74f8e')])
+  leftVelocityChart  = makeLineChart('leftWheelVelocity',  [makeDataset('vel1', '#4ff7a0')])
+  rightVelocityChart = makeLineChart('rightWheelVelocity', [makeDataset('vel2', '#f7c94f')])
+  distanceChart      = makeDistanceRadarChart('distance')
 
-  accelerationChart = makeChart('acceleration', [
+  accelerationChart = makeLineChart('acceleration', [
     makeDataset('X', '#f74f4f'),
     makeDataset('Y', '#4ff74f'),
     makeDataset('Z', '#4f4ff7'),
   ])
 
-  gyroscopeChart = makeChart('gyroscope', [
+  gyroscopeChart = makeLineChart('gyroscope', [
     makeDataset('X', '#f74f4f'),
     makeDataset('Y', '#4ff74f'),
     makeDataset('Z', '#4f4ff7'),
@@ -195,9 +239,19 @@ watch(telemetry, (data: Telemetry | null) => {
   pushToChart(rightPositionChart, t, [data.pos2])
   pushToChart(leftVelocityChart,  t, [data.vel1])
   pushToChart(rightVelocityChart, t, [data.vel2])
-  pushToChart(distanceChart,      t, [data.dist])
+  updateDistanceRadar(distanceChart, data.angle, data.dist)
   pushToChart(accelerationChart,  t, [data.ax, data.ay, data.az])
   pushToChart(gyroscopeChart,     t, [data.gx, data.gy, data.gz])
+})
+
+onBeforeUnmount(() => {
+  leftPositionChart?.destroy()
+  rightPositionChart?.destroy()
+  leftVelocityChart?.destroy()
+  rightVelocityChart?.destroy()
+  accelerationChart?.destroy()
+  gyroscopeChart?.destroy()
+  distanceChart?.destroy()
 })
 
 // ---- Auto-scroll raw data ----
