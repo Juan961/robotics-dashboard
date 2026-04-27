@@ -20,6 +20,11 @@
       </div>
 
       <Telemetry />
+
+      <div>
+        <Joystick />
+        <Map />
+      </div>
     </div>
   </main>
 </template>
