@@ -46,8 +46,8 @@
 <script setup lang="ts">
 const { send } = useRobotWebSocket()
 
-const left = reactive({ kp: 100, ki: 40, kd: 1 })
-const right = reactive({ kp: 100, ki: 40, kd: 1 })
+const left = reactive({ kp: 40, ki: 20, kd: 1 })
+const right = reactive({ kp: 40, ki: 20, kd: 1 })
 
 const sendConstants = () => {
   send({
