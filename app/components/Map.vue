@@ -24,18 +24,18 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 const W = 600
 const H = 400
-const SCALE = 60        // px per world unit
-const GRID_STEP = 1     // world units between grid lines
+const SCALE = 120        // px per world unit
+const GRID_STEP = 0.5     // world units between grid lines
 const ROBOT_SIZE = 16   // px
-const TRAIL_MAX = 400
+const TRAIL_MAX = 2000
 
 // Theme colors
-const C_GRID      = '#1e2229'
-const C_AXIS      = '#3b494b'
-const C_TRAIL     = '#00dbe9'
-const C_ROBOT     = '#dbfcff'
-const C_ARROW     = '#004f54'
-const C_TEXT      = '#bbc7da'
+const C_GRID = '#1e2229'
+const C_AXIS = '#3b494b'
+const C_TRAIL = '#00dbe9'
+const C_ROBOT = '#dbfcff'
+const C_ARROW = '#004f54'
+const C_TEXT = '#bbc7da'
 
 const trail: { x: number; y: number }[] = []
 const robot = { x: 0, y: 0, theta: 0 }
