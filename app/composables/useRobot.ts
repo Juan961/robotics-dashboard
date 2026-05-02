@@ -2,8 +2,8 @@
 
 
 const useRobot = reactive({
-  wheelRadius: 0.021,
-  wheelDistance: 0.155,
+  wheelRadius: 0.024,
+  wheelDistance: 0.157,
   setRobotParams(wheelRadius: number, wheelDistance: number) {
     this.wheelRadius = wheelRadius
     this.wheelDistance = wheelDistance

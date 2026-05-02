@@ -1,6 +1,6 @@
 import { type ComputedRef, type Ref } from 'vue'
 
-const WS_URL = 'ws://10.249.162.142/ws'
+const WS_URL = 'ws://10.123.146.142/ws'
 const MAX_MESSAGES = 200
 
 export interface Telemetry {
