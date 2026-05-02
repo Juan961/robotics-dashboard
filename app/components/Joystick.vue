@@ -107,14 +107,13 @@ function onPointerMove(e: PointerEvent) {
   const linear  = -Math.sin(angle_rad) * dist_norm * MAX_SPEED
   const angular =  Math.cos(angle_rad) * dist_norm * MAX_SPEED
 
-  const ref1 = Number((linear + angular).toFixed(4))
-  const ref2 = Number((linear - angular).toFixed(4))
+  const ref1 = Number((linear - angular).toFixed(4))
+  const ref2 = Number((linear + angular).toFixed(4))
 
   const now = performance.now()
 
   if (allowReference.value && now - lastSendTime >= SEND_INTERVAL_MS) {
-    console.log({ref1, ref2})
-    // send({ ref1, ref2 });
+    send({ ref1, ref2 });
     lastSendTime = now
   }
 
@@ -126,8 +125,7 @@ function onPointerEnd() {
   isDragging = false
   knob.alpha = 0.25
   if (allowReference.value) {
-    console.log({ref1: 0, ref2: 0})
-    // send({ ref1: 0, ref2: 0 })
+    send({ ref1: 0, ref2: 0 })
     lastSendTime = performance.now()
   }
   animateReturn()
