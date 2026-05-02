@@ -39,6 +39,7 @@ export interface Command {
   ki2?: number
   kd2?: number
   reset?: boolean
+  lem?: boolean
 }
 
 // ---- Lazy singleton ----

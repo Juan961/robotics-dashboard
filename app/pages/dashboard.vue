@@ -19,12 +19,15 @@
         <ControlConstants class="lg:col-span-2" />
       </div>
 
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <Joystick class="lg:col-span-2" />
+        <Lemniscata />
+      </div>
+
+      <Map />
+
       <Telemetry />
 
-      <div>
-        <Joystick />
-        <Map />
-      </div>
     </div>
   </main>
 </template>
